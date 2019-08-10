@@ -40,12 +40,13 @@ function update(msg: string, value: number) {
 
 // IMPURE CODE BELOW
 function app(initModel: any, update: any, view: any, node: any) {
-  let model = initModel;
-  let currentView = view(model);
-  ReactDOM.render(currentView, rootNode);
+
+  ReactDOM.render(
+    view(initModel),
+    document.getElementById('root')
+  );
 }
 
-const rootNode = document.getElementById('root');
 
 // Show the app
 app(initModel, update, Counter, rootNode);
