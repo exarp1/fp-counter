@@ -9,49 +9,73 @@ import './index.css';
 import _ from 'lodash';
 
 // Constants
-const initModel = {
-  value: 0
-};
+const MSGS = {
+  ADD: 'ADD',
+  SUBTRACT: 'SUBTRACT',
+}
+
+// Types
+interface Props {
+  update: (msg: string, model: { value: number }) => number
+}
+interface State {
+  value: number
+}
+interface Model extends State {}
+
 
 // Counter component
-function Counter(model: { value: number }) {
+class App extends React.Component<Props> {
+  state= {
+    value: 0
+  }
+
+  render() {
+    return (
+      <CounterView
+        model={this.state}
+        onClickAdd={() => this.clickHandler(MSGS.ADD)}
+        onClickSubtract={() => this.clickHandler(MSGS.SUBTRACT)}
+      />
+    )
+  }
+
+  clickHandler = (message: string) =>
+    this.setState({ value: this.props.update(message, this.state) })
+}
+
+function CounterView (props: {model: any, onClickAdd: any, onClickSubtract: any}) {
+  const { model, onClickAdd, onClickSubtract } = props
+
   return (
-    <div>
-      <div className={'mv2'}>Count: {model.value}</div>
-      <button
-        className={'pv1 ph2 mr2'}
-        onClick={() => console.log('+ clicked!')}
-      >
-        +
-      </button>
-      <button className={'pv1 ph2'} onClick={() => console.log('- clicked!')}>
-        -
-      </button>
-    </div>
-  );
+      <div>
+        <div className={"mv2"}>Count: {model.value}</div>
+        <button
+          className={"pv1 ph2 mr2"}
+          onClick={onClickAdd}
+        >
+          +
+        </button>
+        <button
+          className={"pv1 ph2"}
+          onClick={onClickSubtract}
+        >
+          -
+        </button>
+      </div>
+  )
 }
 
-// Update counter
-function update(msg: string, value: number): number{
-  return msg === 'plus' ? value + 1 : msg === 'minus' ? value - 1 : value;
+const update = (msg: string, model: Model) => {
+  const { value } = model
+
+  return (msg === MSGS.ADD) ? value + 1
+    : (msg === MSGS.SUBTRACT) ? value - 1
+    : value
 }
 
-
-// IMPURE CODE BELOW
-interface AppProps {
-  initModel: { value: number},
-  update: (msg: string, value: number)=> number,
-  view: (model: { value: number}) => any,
-  node: any,
-}
-
-// App to render the counter
-const app = ({initModel, update, view, node}: AppProps) => {
-  ReactDOM.render(view(initModel), node);
-}
-
-// Capture root node reference to attach our virtual DOM to
-const rootNode = document.getElementById('root');
-
-// Show the app
-app({ initModel, update, view: Counter, node: rootNode});
+// Attach to the DOM
+ReactDOM.render(
+  <App update={update}/>,
+  document.getElementById('root')
+)
