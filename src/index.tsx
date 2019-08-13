@@ -11,71 +11,121 @@ import _ from 'lodash';
 // Constants
 const MSGS = {
   ADD: 'ADD',
-  SUBTRACT: 'SUBTRACT',
-}
+  SUBTRACT: 'SUBTRACT'
+};
+const initModel = { value: 0 }
 
 // Types
+interface Model { value: number}
 interface Props {
-  update: (msg: string, model: { value: number }) => number
+  update: (message: string, model: Model) => number;
+  model: { value: number };
+  state: { value: number };
+  onChangeModel: any;
 }
-interface State {
-  value: number
-}
-interface Model extends State {}
-
 
 // Counter component
-class App extends React.Component<Props> {
-  state= {
-    value: 0
+function App({ onChangeModel, model }: Props) {
+  const view = (
+    <CounterView
+      model={model}
+      onClickAdd={() => clickHandler(MSGS.ADD)}
+      onClickSubtract={() => clickHandler(MSGS.SUBTRACT)}
+    />
+  );
+  function clickHandler (message: string) {
+    return onChangeModel({ value: update({message, model})})
   }
 
-  render() {
-    return (
-      <CounterView
-        model={this.state}
-        onClickAdd={() => this.clickHandler(MSGS.ADD)}
-        onClickSubtract={() => this.clickHandler(MSGS.SUBTRACT)}
-      />
-    )
-  }
-
-  clickHandler = (message: string) =>
-    this.setState({ value: this.props.update(message, this.state) })
+  return view
 }
 
-function CounterView (props: {model: any, onClickAdd: any, onClickSubtract: any}) {
-  const { model, onClickAdd, onClickSubtract } = props
+function CounterView(props: {
+  model: any;
+  onClickAdd: any;
+  onClickSubtract: any;
+}) {
+  const { model: { value }, onClickAdd, onClickSubtract } = props;
 
   return (
-      <div>
-        <div className={"mv2"}>Count: {model.value}</div>
-        <button
-          className={"pv1 ph2 mr2"}
-          onClick={onClickAdd}
-        >
-          +
-        </button>
-        <button
-          className={"pv1 ph2"}
-          onClick={onClickSubtract}
-        >
-          -
-        </button>
-      </div>
-  )
+    <div>
+      <CounterOutput classes="mv2" value={value} />
+
+      <CounterButton classes={'pv1 ph2 mr2'} onClick={onClickAdd}>
+        +
+      </CounterButton>
+
+      <CounterButton classes={'pv1 ph2'} onClick={onClickSubtract}>
+        -
+      </CounterButton>
+    </div>
+  );
 }
 
-const update = (msg: string, model: Model) => {
-  const { value } = model
-
-  return (msg === MSGS.ADD) ? value + 1
-    : (msg === MSGS.SUBTRACT) ? value - 1
-    : value
+interface CounterOutputProps {
+  classes: string,
+  value: number,
 }
+
+function CounterOutput(props: CounterOutputProps) {
+  const { classes, value } = props;
+  return <div className={classes}>Count: {value}</div>;
+}
+
+interface CounterButtonProps {
+  classes: string,
+  onClick: () => void,
+  children: any,
+}
+
+function CounterButton(props: CounterButtonProps) {
+  return (
+    <button className={props.classes} onClick={props.onClick}>
+      {props.children}
+    </button>
+  );
+}
+
+const update = ({ message, model }: { message: string, model: Model}) => {
+  const { value } = model;
+
+  return message === MSGS.ADD
+    ? value + 1
+    : message === MSGS.SUBTRACT
+    ? value - 1
+    : value;
+};
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// HOC and DOM stuff - impure
+///////////////////////////////////////////////////////////////////////////////////
+
+// HOC which provides a model object we can mutate
+const withModel = (WrappedComponent: any) =>
+  class extends React.PureComponent<Props> {
+    state = {
+      value: 0
+    };
+
+    public render() {
+      return (
+        <WrappedComponent
+          model={this.state}
+          onChangeModel={this.onChangeModel}
+          {...this.props}
+        />
+      );
+    }
+
+    public onChangeModel = (newModel: any) => this.setState({ ...newModel })
+  }
+
+const AppWithModel: React.ComponentClass<any> = withModel(App)
 
 // Attach to the DOM
 ReactDOM.render(
-  <App update={update}/>,
+  <AppWithModel update={update} />,
   document.getElementById('root')
-)
+);
